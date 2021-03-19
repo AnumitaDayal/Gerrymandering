@@ -1,0 +1,136 @@
+---
+title: "Gerrymandering-Oregon"
+author: "Anumita"
+date: "25/11/2020"
+output: html_document
+---
+
+```{r}
+library(dplyr)
+library(sf)
+library(readr)
+library(dplyr)
+library(ggplot2)
+```
+
+
+```{r}
+Oregon <- st_read("ext/data/Oregon_2008/Oregon_2008.shp")   
+Oregon
+```
+
+```{r}
+library(ggplot2)
+OregonPol <- Oregon %>% mutate(`Dem%` = 100* Democrat/(Democrat+Republican)) %>% mutate(`Rep%` = -(100 - `Dem%`)) %>% mutate(Partywon = ifelse(abs(`Rep%`)>`Dem%`, `Rep%`, `Dem%`))%>%transform(CD = as.numeric(CD))
+
+dev.new(width=10, height=6)
+PlotOregon_2008 <-  ggplot(OregonPol) + geom_sf(aes(fill = Partywon), 
+                                      color = "black", size = 0.06) + scale_fill_gradient2(low = "red", high = "blue", mid = "white", midpoint = 0, limit = c(-100, 100)) + 
+  ggtitle("2008 Presidential Election Oregon") + 
+  theme(axis.text = element_text(size = 7),  axis.title =  element_text(size = 14, face = "bold")) + labs(fill = "Winning \nParty")
+
+PlotOregon_2008
+```
+```{r}
+library(dplyr)
+library(redist)
+library(ggplot2)
+```
+
+## Election Test: Polsbypopper
+
+```{r}
+library(redist)
+library(ggplot2)
+org_dist <- OregonPol[['CD']]
+rep.vote <- OregonPol[['Republican']]
+dem.vote <- OregonPol[['Democrat']]
+org.test <- redist.metrics(org_dist, measure = 'DVS', rvote = rep.vote, dvote <- dem.vote) %>% left_join(OregonPol, ., by = c("CD" = "districts"))
+Oregon_compact <- redist.compactness(OregonPol, org_dist, measure = "PolsbyPopper") %>% left_join(OregonPol, ., by = c("CD" = "districts"))
+plot_Oregon_compact <- ggplot(Oregon_compact) + geom_sf(aes(fill = PolsbyPopper)) + ggtitle("PolsbyPopper Test of 2008 Election")
+plot_Oregon_compact
+```
+
+## Election Test: DVS
+
+```{r}
+org.test.dvs.plot = ggplot(org.test)+geom_sf(aes(fill = DVS))+ggtitle("DVS Test for 2008 Election")
+
+org.test.dvs.plot
+```
+
+
+
+# Code for Analyzing 2020 Election Data
+
+```{r}
+data.recent <- st_read("ext/data/Oregon/Oregon.shp")
+data.recent
+mod.recent <- data.recent %>% group_by(CD116FP) %>% mutate(Total.vote = Democrat+Republican) %>% mutate(dem.per = 100*(Democrat/Total.vote)) %>% mutate(rep.per = -100*(Republican/Total.vote)) %>% mutate(PartyWon = ifelse(abs(rep.per)>dem.per,rep.per,dem.per)) %>% transform(CD116FP = as.numeric(CD116FP))
+PlotOreg2020 <- ggplot(mod.recent)+geom_sf(aes(fill = PartyWon), color = "Black", size = 0.06)+scale_fill_gradient2(low = "red", high = "blue", mid = "white", midpoint = 0, limits = c(-100,100)) + ggtitle("2020 Presidential Election Oregon") + theme(axis.text = element_text(size = 7),axis.title = element_text(size = 14, face = "bold")) + labs(fill = "Winning \nParty")
+PlotOreg2020
+```
+## Election Test: PolsbyPopper
+
+```{r}
+oreg.dist.2020 = mod.recent[['CD116FP']]
+repvote.2020 = mod.recent[['Republican']]
+demvote.2020 = mod.recent[['Democrat']]
+
+oreg.dist.2020.test <- redist.metrics(oreg.dist.2020, measure = 'DVS', rvote = repvote.2020, dvote <- demvote.2020) %>% left_join(mod.recent, ., by = c("CD116FP" = "districts"))
+
+oreg.dist.2020.comapact <- redist.compactness(OregonPol, oreg.dist.2020, measure = "PolsbyPopper") %>% left_join(mod.recent, ., by = c("CD116FP" = "districts"))
+
+plot.oreg.compact <- ggplot(oreg.dist.2020.comapact)+geom_sf(aes(fill = PolsbyPopper))+ggtitle("PolsbyPopper Test for 2020")
+
+plot.oreg.compact
+```
+## Election Test: DVS
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/Arpita
+```{r}
+plot.oreg.2020.dvs <- ggplot(oreg.dist.2020.test)+geom_sf(aes(fill = DVS))+ggtitle("DVS test for election 2020")
+plot.oreg.2020.dvs
+```
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/Arpita
+```{r}
+library(animation)
+library(magick)
+saveGIF({
+  ani.options(interval = 1, nmax = 50)
+  plot(PlotOregon_2008)
+  plot(PlotOreg2020)},
+  ani.width = 720, ani.height = 480)
+```
+
+```{r}
+saveGIF({
+  ani.options(interval = 1, nmax = 50)
+  plot(plot.oreg.compact)
+  plot(plot_Oregon_compact)},
+  ani.width = 720, ani.height = 480)
+```
+
+
+```{r}
+saveGIF({
+  ani.options(interval = 1, nmax = 50)
+  plot(org.test.dvs.plot)
+  plot(plot.oreg.2020.dvs)},
+  ani.width = 720, ani.height = 480)
+```
+
+
+
+
+
+
+
+
+
+
